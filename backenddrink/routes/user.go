@@ -4,6 +4,7 @@ import (
 	"drinkBack/models"
 	"drinkBack/utils"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/mail"
@@ -71,7 +72,7 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	token, err := utils.GenerateAuthenticationToken(inserted.Id.Hex())
+	token, err := utils.GenerateAuthenticationToken(inserted.Id.Hex(), utils.AUTH)
 	if err != nil {
 		// Deletar usuário criado se der merda no generate token
 		http.Error(w, "Error generating authentication to user", http.StatusInternalServerError)
@@ -90,6 +91,17 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write(res)
+}
+
+func (r *Router) CreateUserInviteHandler(w http.ResponseWriter, req *http.Request) {
+	a_token := req.Context().Value("usrToken").(models.AccessTokenClaims)
+	createdBy := a_token.Id
+	token, err := utils.GenerateAuthenticationToken(createdBy, utils.INVITE)
+	if err != nil {
+		http.Error(w, "Error authenticating your invite", http.StatusUnauthorized)
+		return
+	}
+	w.Write([]byte(fmt.Sprintf("http://localhost:3000/user/%s", token)))
 }
 
 func (r *Router) GetUserHandler(w http.ResponseWriter, req *http.Request) {

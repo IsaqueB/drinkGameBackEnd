@@ -7,12 +7,13 @@ import (
 )
 
 type User struct {
-	Id       primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
-	Name     string             `bson:"name,omitempty" json:"name,omitempty"`
-	Email    string             `bson:"email" json:"email"`
-	Path     string             `bson:"path,omitempty" json:"path,omitempty"`
-	Password string             `bson:"password" json:"password"`
-	Salt     []byte             `bson:"salt" json:"salt"`
+	Id        primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	Name      string             `bson:"name,omitempty" json:"name,omitempty"`
+	Email     string             `bson:"email" json:"email"`
+	Path      string             `bson:"path,omitempty" json:"path,omitempty"`
+	Password  string             `bson:"password" json:"password"`
+	Salt      []byte             `bson:"salt" json:"salt"`
+	CreatedBy primitive.ObjectID `bson:"createdby" json:"createdby"`
 }
 
 type UserData struct {

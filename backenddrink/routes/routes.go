@@ -20,23 +20,21 @@ func (r *Router) GenerateHandler() *mux.Router {
 	d := router.PathPrefix("/drinks").Subrouter()
 	//Drinks
 	d.HandleFunc("/", r.CreateDrinkHandler).Methods("POST", "OPTIONS")
-	// d.HandleFunc("/{id}", r.GetDrinkHandler).Methods("GET")
-	// d.HandleFunc("/", GetDrinksHandler).Methods("GET")
-	// d.HandleFunc("/", UpdateDrinkHandler).Methods("PUT")
 	d.HandleFunc("/done", r.UpdateDrinkDoneHandler).Methods("PUT", "OPTIONS")
-	// d.HandleFunc("/{id}", DeleteDrinkhandler).Methods("DELETE")
 	d.Use(middlewares.Authenticate())
 	//Users
-	p_open := router.PathPrefix("/user").Subrouter()
-	p_open.HandleFunc("/", r.CreateUserHandler).Methods("POST", "OPTIONS")
-	// For closed requests
-	p := p_open.PathPrefix("").Subrouter()
+	// Using invite middleware
+	p_i := router.PathPrefix("/user").Subrouter()
+	p_i.HandleFunc("/{token}", r.CreateUserHandler).Methods("POST", "OPTIONS")
+	p_i.Use(middlewares.CreateUserAuthenticate())
+	// Using authenticate middleware
+	p := router.PathPrefix("/user").Subrouter()
+	p.HandleFunc("/invite/", r.CreateUserInviteHandler).Methods("POST", "OPTIONS")
 	p.HandleFunc("/{id}", r.GetUserHandler).Methods("GET", "OPTIONS")
 	p.HandleFunc("/", r.GetUsersHandler).Methods("GET", "OPTIONS")
 	p.HandleFunc("/{id}/drinks", r.GetDrinksFromUserHandler).Methods("GET", "OPTIONS")
 	p.HandleFunc("/{id}/debts", r.GetDebtsFromUserHandler).Methods("GET", "OPTIONS")
 	p.HandleFunc("/{id}", r.UpdateUserHandler).Methods("PUT", "OPTIONS")
-	// p.HandleFunc("/", DeleteUserHandler).Methods("DELETE")
 	p.Use(middlewares.Authenticate())
 	//Debt
 	de := router.PathPrefix("/debt").Subrouter()

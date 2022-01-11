@@ -116,7 +116,7 @@ func (d *dbClient) VerifyUserPassword(email string, password string, data *model
 	if err != nil || !ok {
 		return false, err
 	}
-	token, err := utils.GenerateAuthenticationToken(user.Id.Hex())
+	token, err := utils.GenerateAuthenticationToken(user.Id.Hex(), utils.AUTH)
 	if err != nil {
 		return ok, err
 	}

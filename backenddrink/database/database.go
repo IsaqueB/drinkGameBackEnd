@@ -3,6 +3,9 @@ package database
 import (
 	"context"
 	"drinkBack/models"
+	"drinkBack/utils"
+	"fmt"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -40,7 +43,7 @@ type DbClient interface {
 
 func NewClient() (DbClient, error) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://mongo:27017"))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URL")))
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +56,27 @@ func NewClient() (DbClient, error) {
 	}
 
 	dbCl := &dbClient{Client: client}
+
+	// Check seed user
+	var seed models.User
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = dbCl.getUserDatabase().FindOne(
+		ctx,
+		bson.M{
+			"email": os.Getenv("SEED_MAIL"),
+		},
+	).Decode(&seed)
+
+	if err != nil {
+		switch err {
+		case mongo.ErrNoDocuments:
+			if err := dbCl.createSeedUser(); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, err
+		}
+	}
 
 	return dbCl, nil
 }
@@ -79,4 +103,28 @@ func (d *dbClient) getDrinkDatabase() *mongo.Collection {
 func (d *dbClient) getDebtDatabase() *mongo.Collection {
 	debtDb := d.Client.Database(dbName).Collection("debt")
 	return debtDb
+}
+
+func (d *dbClient) createSeedUser() error {
+	fmt.Println("(DATABASE) seed user not found, creating using informations in .env")
+	if valid, err := utils.ValidatePassword([]byte(os.Getenv("SEED_PWD"))); err != nil || !valid {
+		return fmt.Errorf("could not generate seed user. valid result: %v.\nError: %v", valid, err)
+	}
+	seedSalt, err := utils.GenerateRandomSalt(10)
+	if err != nil {
+		return fmt.Errorf("could not generate seed user. %v", err)
+	}
+	seedPwd, err := utils.HashPassword(os.Getenv("SEED_PWD"), seedSalt)
+	if err != nil {
+		return fmt.Errorf("could not generate seed user. %v", err)
+	}
+	d.getUserDatabase().InsertOne(context.Background(), models.User{
+		Id:       primitive.NewObjectID(),
+		Name:     "Seed",
+		Email:    os.Getenv("SEED_MAIL"),
+		Path:     "https://cdn.discordapp.com/attachments/580125063186087966/930244138325131264/59MvRFdT_400x400.png",
+		Password: seedPwd,
+		Salt:     seedSalt,
+	})
+	return nil
 }
