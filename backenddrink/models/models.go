@@ -17,10 +17,11 @@ type User struct {
 }
 
 type UserData struct {
-	Id    primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
-	Name  string             `bson:"name,omitempty" json:"name,omitempty"`
-	Email string             `bson:"email" json:"email"`
-	Path  string             `bson:"path,omitempty" json:"path,omitempty"`
+	Id        primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	Name      string             `bson:"name,omitempty" json:"name,omitempty"`
+	Email     string             `bson:"email" json:"email"`
+	Path      string             `bson:"path,omitempty" json:"path,omitempty"`
+	CreatedBy primitive.ObjectID `bson:"createdby" json:"createdby"`
 }
 
 type Drink struct {

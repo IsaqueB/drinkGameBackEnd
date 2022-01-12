@@ -74,18 +74,18 @@ func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.UserData, erro
 	return user, nil
 }
 
-func (d *dbClient) FindAllUsers() ([]models.User, error) {
+func (d *dbClient) FindAllUsers() ([]models.UserData, error) {
 
 	cur, err := d.getUserDatabase().Find(context.TODO(), bson.D{{}}, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var users []models.User
+	var users []models.UserData
 
 	for cur.Next(context.TODO()) {
 		//Create a value into which the single document can be decoded
-		var elem models.User
+		var elem models.UserData
 		err := cur.Decode(&elem)
 		if err != nil {
 			log.Fatal(err)

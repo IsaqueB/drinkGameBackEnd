@@ -25,20 +25,24 @@ type dbClient struct {
 
 type DbClient interface {
 	CheckConnection() error
+
 	CreateNewUser(usr models.User) (models.UserData, error)
-	CreateNewDrink(drink models.Drink) (models.Drink, error)
-	CreateNewDebt(debt models.Debt) (models.Debt, error)
 	FindUserById(usrId primitive.ObjectID) (models.UserData, error)
-	FindAllUsers() ([]models.User, error)
-	VerifyUserPassword(email string, password string, data *models.LoginResponse) (bool, error)
+	FindAllUsers() ([]models.UserData, error)
 	FindDrinksOfUser(usrId primitive.ObjectID) ([]models.Drink, error)
-	FindAllDrinks(usrId primitive.ObjectID) ([]models.Drink, error)
-	FindAllDebts() ([]models.Debt, error)
+	FindDebtsOfUser(usrId primitive.ObjectID) ([]models.Debt, error)
 	UpdateUserById(usrId primitive.ObjectID, usr models.User) (models.UserData, error)
 	UpdateDrinksByIds(usrIds []primitive.ObjectID, done bool) ([]models.Drink, error)
-	PayDebt(query bson.M) (models.Debt, error)
+
+	CreateNewDrink(drink models.Drink) (models.Drink, error)
+	FindAllDrinks(usrId primitive.ObjectID) ([]models.Drink, error)
+
+	CreateNewDebt(debt models.Debt) (models.Debt, error)
+	FindAllDebts() ([]models.Debt, error)
 	FindDebtById(debtId primitive.ObjectID) (models.Debt, error)
-	FindDebtsOfUser(usrId primitive.ObjectID) ([]models.Debt, error)
+	PayDebt(query bson.M) (models.Debt, error)
+
+	VerifyUserPassword(email string, password string, data *models.LoginResponse) (bool, error)
 }
 
 func NewClient() (DbClient, error) {

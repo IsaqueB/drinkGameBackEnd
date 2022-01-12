@@ -24,10 +24,13 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
-	if bdJn.Name == "" {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
-	}
+
+	utils.ValidateBody(bdJn, "Salt")
+
+	// if bdJn.Name == "" {
+	// 	http.Error(w, "Invalid input", http.StatusBadRequest)
+	// 	return
+	// }
 
 	if _, err := mail.ParseAddress(bdJn.Email); err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
