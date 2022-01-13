@@ -80,16 +80,25 @@ func (d *dbClient) PayDebt(query bson.M) (models.Debt, error) {
 	debtDb := d.getDebtDatabase()
 	query_options := options.FindOneAndUpdate()
 	rd := options.After
+	af := options.ArrayFilters{
+		Filters: []interface{}{
+			bson.M{
+				"elem._id": bson.M{
+					"$in": query["debtors"].([]primitive.ObjectID),
+				},
+			},
+		}}
 	query_options.ReturnDocument = &rd
+	query_options.ArrayFilters = &af
 	var debt models.Debt
 	if err := debtDb.FindOneAndUpdate(context.Background(),
 		bson.M{
-			"_id":         query["_id"].(primitive.ObjectID),
-			"debtors._id": query["usrId"].(primitive.ObjectID),
+			"_id":      query["_id"].(primitive.ObjectID),
+			"creditor": query["creditor"].(primitive.ObjectID),
 		},
 		bson.M{
 			"$set": bson.M{
-				"debtors.$.paid": query["paid"].(bool),
+				"debtors.$[elem].paid": query["paid"].(bool),
 			},
 		},
 		query_options,

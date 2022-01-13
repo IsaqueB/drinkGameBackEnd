@@ -5,7 +5,9 @@ import (
 	"drinkBack/models"
 	"drinkBack/utils"
 	"errors"
+	"fmt"
 	"log"
+	"net/mail"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -27,29 +29,30 @@ func (d *dbClient) CreateNewUser(usr models.User) (models.UserData, error) {
 	return filtered, err
 }
 
-func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, usr models.User) (models.UserData, error) {
+func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, update models.UserUpdate) (models.UserData, error) {
 	userDb := d.getUserDatabase()
 
-	update := make(bson.M)
-	if usr.Name != "" {
-		update["name"] = usr.Name
-	}
-	if usr.Path != "" {
-		if err := utils.ValidateUserPath(usr.Path); err != nil {
+	if update.Email != "" {
+		if _, err := mail.ParseAddress(update.Email); err != nil {
 			return models.UserData{}, err
 		}
-		update["path"] = usr.Path
 	}
-	if len(update) == 0 {
-		return models.UserData{}, errors.New("no update in body")
+	if update.Path != "" {
+		if err := utils.ValidateUserPath(update.Path); err != nil {
+			return models.UserData{}, err
+		}
 	}
 
 	query_options := options.FindOneAndUpdate()
 	rd := options.After
 	query_options.ReturnDocument = &rd
+
 	result_fnu := userDb.FindOneAndUpdate(context.Background(), bson.M{"_id": usrId}, bson.M{"$set": update}, query_options)
 	var doc_upd models.UserData
 	if err := result_fnu.Decode(&doc_upd); err != nil {
+		fmt.Println("ERR")
+		fmt.Println(err)
+		fmt.Println(doc_upd)
 		return models.UserData{}, err
 	}
 	return doc_upd, nil

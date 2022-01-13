@@ -31,7 +31,7 @@ type DbClient interface {
 	FindAllUsers() ([]models.UserData, error)
 	FindDrinksOfUser(usrId primitive.ObjectID) ([]models.Drink, error)
 	FindDebtsOfUser(usrId primitive.ObjectID) ([]models.Debt, error)
-	UpdateUserById(usrId primitive.ObjectID, usr models.User) (models.UserData, error)
+	UpdateUserById(usrId primitive.ObjectID, usr models.UserUpdate) (models.UserData, error)
 	UpdateDrinksByIds(usrIds []primitive.ObjectID, done bool) ([]models.Drink, error)
 
 	CreateNewDrink(drink models.Drink) (models.Drink, error)
@@ -122,7 +122,7 @@ func (d *dbClient) createSeedUser() error {
 	if err != nil {
 		return fmt.Errorf("could not generate seed user. %v", err)
 	}
-	d.getUserDatabase().InsertOne(context.Background(), models.User{
+	_, err = d.getUserDatabase().InsertOne(context.Background(), models.User{
 		Id:       primitive.NewObjectID(),
 		Name:     "Seed",
 		Email:    os.Getenv("SEED_MAIL"),
@@ -130,5 +130,8 @@ func (d *dbClient) createSeedUser() error {
 		Password: seedPwd,
 		Salt:     seedSalt,
 	})
+	if err != nil {
+		return fmt.Errorf("could not generate seed user. %v", err)
+	}
 	return nil
 }

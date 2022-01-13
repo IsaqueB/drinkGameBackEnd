@@ -19,18 +19,32 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn models.User
+
+	type request struct {
+		Name      string             `bson:"name,omitempty" json:"name,omitempty"`
+		Email     string             `bson:"email" json:"email"`
+		Path      string             `bson:"path,omitempty" json:"path,omitempty"`
+		Password  string             `bson:"password" json:"password"`
+		CreatedBy primitive.ObjectID `bson:"createdby" json:"createdby"`
+	}
+
+	var bdJn request
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
 
-	utils.ValidateBody(bdJn, "Salt")
+	if createdBy, err := primitive.ObjectIDFromHex(req.Context().Value("creator").(models.AccessTokenClaims).Id); err != nil {
+		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
+		return
+	} else {
+		bdJn.CreatedBy = createdBy
+	}
 
-	// if bdJn.Name == "" {
-	// 	http.Error(w, "Invalid input", http.StatusBadRequest)
-	// 	return
-	// }
+	if ok := utils.ValidateBody(bdJn); !ok {
+		http.Error(w, "Missing information", http.StatusBadRequest)
+		return
+	}
 
 	if _, err := mail.ParseAddress(bdJn.Email); err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
@@ -64,23 +78,19 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	inserted, err := r.Client.CreateNewUser(models.User{
-		Name:     bdJn.Name,
-		Email:    bdJn.Email,
-		Path:     bdJn.Path,
-		Password: hash,
-		Salt:     salt,
+		Name:      bdJn.Name,
+		Email:     bdJn.Email,
+		Path:      bdJn.Path,
+		Password:  hash,
+		Salt:      salt,
+		CreatedBy: bdJn.CreatedBy,
 	})
 	if err != nil {
 		http.Error(w, "Error inserting user to DB", http.StatusBadRequest)
 		return
 	}
 
-	token, err := utils.GenerateAuthenticationToken(inserted.Id.Hex(), utils.AUTH)
-	if err != nil {
-		// Deletar usuário criado se der merda no generate token
-		http.Error(w, "Error generating authentication to user", http.StatusInternalServerError)
-		return
-	}
+	token, _ := utils.GenerateAuthenticationToken(inserted.Id.Hex(), utils.AUTH)
 
 	res, err := json.Marshal(models.LoginResponse{
 		UserData: inserted,
@@ -159,7 +169,7 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn models.User
+	var bdJn models.UserUpdate
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return

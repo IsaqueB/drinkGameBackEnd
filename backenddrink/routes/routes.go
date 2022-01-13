@@ -41,7 +41,7 @@ func (r *Router) GenerateHandler() *mux.Router {
 	de.HandleFunc("/", r.CreateDebtHandler).Methods("POST", "OPTIONS")
 	de.HandleFunc("/{id}", r.GetDebtHandler).Methods("GET", "OPTIONS")
 	de.HandleFunc("/", r.GetDebtsHandler).Methods("GET", "OPTIONS")
-	de.HandleFunc("/{id}/pay/{usrId}", r.PayDebtHandler).Methods("PUT", "OPTIONS")
+	de.HandleFunc("/pay/{id}", r.PayDebtHandler).Methods("PUT", "OPTIONS")
 	de.Use(middlewares.Authenticate())
 
 	a := router.PathPrefix("/auth").Subrouter()
@@ -58,7 +58,10 @@ func (r *Router) AuthenticateHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn models.Request
+	var bdJn struct {
+		Email    string `bson:"email" json:"email"`
+		Password string `bson:"password" json:"password"`
+	}
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
